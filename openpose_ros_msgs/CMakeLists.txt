@@ -19,6 +19,7 @@ add_message_files(
   OpenPoseHuman.msg
   OpenPoseHumanList.msg
   PointWithProb.msg
+  HandKeypoints.msg
 )
 
 generate_messages(
