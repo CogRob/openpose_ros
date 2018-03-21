@@ -13,6 +13,7 @@
 #include <openpose_ros_msgs/OpenPoseHuman.h>
 #include <openpose_ros_msgs/OpenPoseHumanList.h>
 #include <openpose_ros_msgs/PointWithProb.h>
+#include <openpose_ros_msgs/HandKeypoints.h>
 
 #include <openpose.h>
 #include <gflags_options.h>

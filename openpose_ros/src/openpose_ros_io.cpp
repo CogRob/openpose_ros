@@ -2,6 +2,9 @@
 
 using namespace openpose_ros;
 
+/*
+ * Subscribes to the input video feed, publishes human lists from OpenPose.
+ */
 OpenPoseROSIO::OpenPoseROSIO(OpenPose &openPose): it_(nh_)
 {
     // Subscribe to input video feed and publish human lists as output
@@ -17,13 +20,18 @@ OpenPoseROSIO::OpenPoseROSIO(OpenPose &openPose): it_(nh_)
     openpose_ = &openPose;
 }
 
+
+/*
+ * Process images by converting to OpenCV format and sending to OpenPose
+ * to process.
+ */
 void OpenPoseROSIO::processImage(const sensor_msgs::ImageConstPtr& msg)
 {
     convertImage(msg);
     std::shared_ptr<std::vector<op::Datum>> datumToProcess = createDatum();
 
     bool successfullyEmplaced = openpose_->waitAndEmplace(datumToProcess);
-    
+
     // Pop frame
     std::shared_ptr<std::vector<op::Datum>> datumProcessed;
     if (successfullyEmplaced && openpose_->waitAndPop(datumProcessed))
@@ -39,6 +47,10 @@ void OpenPoseROSIO::processImage(const sensor_msgs::ImageConstPtr& msg)
     }
 }
 
+
+/*
+ * Converts image from sensor_msgs format to OpenCV format.
+ */
 void OpenPoseROSIO::convertImage(const sensor_msgs::ImageConstPtr& msg)
 {
     try
@@ -53,6 +65,9 @@ void OpenPoseROSIO::convertImage(const sensor_msgs::ImageConstPtr& msg)
     }
 }
 
+/*
+ * Creates vector of datums for processing.
+ */
 std::shared_ptr<std::vector<op::Datum>> OpenPoseROSIO::createDatum()
 {
     // Close program when empty frame
@@ -74,11 +89,14 @@ std::shared_ptr<std::vector<op::Datum>> OpenPoseROSIO::createDatum()
     }
 }
 
+/*
+ * GUI? 
+ */
 bool OpenPoseROSIO::display(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr)
 {
     // User's displaying/saving/other processing here
-        // datum.cvOutputData: rendered frame with pose or heatmaps
-        // datum.poseKeypoints: Array<float> with the estimated pose
+    // datum.cvOutputData: rendered frame with pose or heatmaps
+    // datum.poseKeypoints: Array<float> with the estimated pose
     char key = ' ';
     if (datumsPtr != nullptr && !datumsPtr->empty())
     {
@@ -96,6 +114,10 @@ cv_bridge::CvImagePtr& OpenPoseROSIO::getCvImagePtr()
     return cv_img_ptr_;
 }
 
+
+/*
+ * Log detected keypoints for body, face, and hands to console.
+*/
 void OpenPoseROSIO::printKeypoints(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr)
 {
     // Example: How to use the pose keypoints
@@ -148,6 +170,10 @@ void OpenPoseROSIO::printKeypoints(const std::shared_ptr<std::vector<op::Datum>>
         op::log("Nullptr or empty datumsPtr found.", op::Priority::High, __LINE__, __FUNCTION__, __FILE__);
 }
 
+
+/*
+ * Publish detected keypoints from OpenPose for body, face, and hands to ROS node.
+ */
 void OpenPoseROSIO::publish(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr)
 {
     if (datumsPtr != nullptr && !datumsPtr->empty() && !FLAGS_body_disable)
@@ -162,7 +188,7 @@ void OpenPoseROSIO::publish(const std::shared_ptr<std::vector<op::Datum>>& datum
         human_list_msg.header.stamp = ros::Time::now();
         human_list_msg.rgb_image_header = rgb_image_header_;
         human_list_msg.num_humans = poseKeypoints.getSize(0);
-        
+
         std::vector<openpose_ros_msgs::OpenPoseHuman> human_list(poseKeypoints.getSize(0));
 
         for (auto person = 0 ; person < poseKeypoints.getSize(0) ; person++)
@@ -199,7 +225,7 @@ void OpenPoseROSIO::publish(const std::shared_ptr<std::vector<op::Datum>>& datum
                         num_face_key_points_with_non_zero_prob++;
                     }
                     human.face_key_points_with_prob.at(facePart) = face_point_with_prob;
-                }  
+                }
                 human.num_face_key_points_with_non_zero_prob = num_face_key_points_with_non_zero_prob;
 
                 openpose_ros_msgs::BoundingBox face_bounding_box;
@@ -209,7 +235,7 @@ void OpenPoseROSIO::publish(const std::shared_ptr<std::vector<op::Datum>>& datum
                 face_bounding_box.height = face_rectangles.at(person).height;
                 human.face_bounding_box = face_bounding_box;
             }
-            
+
             if(FLAGS_hand)
             {
 
