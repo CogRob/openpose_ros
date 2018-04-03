@@ -1,6 +1,6 @@
 # openpose_ros
 
-Example ROS catkin package that utilizes the OpenPose library from https://github.com/CMU-Perceptual-Computing-Lab/openpose.
+ROS package wrapping the OpenPose library from https://github.com/CMU-Perceptual-Computing-Lab/openpose.
 
 ## System
 Tested on:
