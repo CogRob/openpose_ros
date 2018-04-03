@@ -24,6 +24,8 @@ OpenPoseROSIO::OpenPoseROSIO(OpenPose &openPose): it_(nh_)
 /*
  * Process images by converting to OpenCV format and sending to OpenPose
  * to process.
+ * After OpenPose has processed image, display updated frame in window, print
+ * keypoints to terminal, and publish keypoints to ROS topic.
  */
 void OpenPoseROSIO::processImage(const sensor_msgs::ImageConstPtr& msg)
 {
@@ -34,11 +36,17 @@ void OpenPoseROSIO::processImage(const sensor_msgs::ImageConstPtr& msg)
 
     // Pop frame
     std::shared_ptr<std::vector<op::Datum>> datumProcessed;
+
+    // If OpenPose successfully processes frame
     if (successfullyEmplaced && openpose_->waitAndPop(datumProcessed))
     {
+
+        // Publish keypoints from OpenPose to ROS topic and log to console
+        publishKeypoints(datumProcessed);
+
+        // Display frame in window
         display(datumProcessed);
-        printKeypoints(datumProcessed);
-        publish(datumProcessed);
+
     }
     else
     {
@@ -49,7 +57,7 @@ void OpenPoseROSIO::processImage(const sensor_msgs::ImageConstPtr& msg)
 
 
 /*
- * Converts image from sensor_msgs format to OpenCV format.
+ * Converts image from sensor_msgs BGR8 format to OpenCV format.
  */
 void OpenPoseROSIO::convertImage(const sensor_msgs::ImageConstPtr& msg)
 {
@@ -64,6 +72,7 @@ void OpenPoseROSIO::convertImage(const sensor_msgs::ImageConstPtr& msg)
         return;
     }
 }
+
 
 /*
  * Creates vector of datums for processing.
@@ -90,17 +99,42 @@ std::shared_ptr<std::vector<op::Datum>> OpenPoseROSIO::createDatum()
 }
 
 /*
- * GUI? 
+ * Displays image from OpenPose with rendered pose or heatmap.
+ * Also displays bounding boxes for face and hands.
+ * TODO: add user-defined flag for bounding box display
  */
 bool OpenPoseROSIO::display(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr)
 {
+
+    bool faceBoundingBoxShow = 1;
+    bool handBoundingBoxShow = 0;
+
     // User's displaying/saving/other processing here
     // datum.cvOutputData: rendered frame with pose or heatmaps
     // datum.poseKeypoints: Array<float> with the estimated pose
     char key = ' ';
     if (datumsPtr != nullptr && !datumsPtr->empty())
     {
-        cv::imshow("User worker GUI", datumsPtr->at(0).cvOutputData);
+
+        // Get rendered image from OpenPose
+        cv::Mat outputImg = datumsPtr->at(0).cvOutputData;
+
+        // If we're drawing a bounding box for the face, get points and draw
+        if (faceBoundingBoxShow)
+        {
+
+        }
+
+
+        // If we're drawing a bounding box for hands, get points and draw
+
+        // try to draw a circle
+        cv::Point pt = cv::Point(250,250);
+        int thickness = 1;
+        int lineType = 8;
+        cv::circle(outputImg, pt, 50, cv::Scalar( 0, 0, 255 ), thickness, lineType);
+
+        cv::imshow("OpenPose Output", outputImg);
         // Display image and sleeps at least 1 ms (it usually sleeps ~5-10 msec to display the image)
         key = (char)cv::waitKey(1);
     }
@@ -109,6 +143,9 @@ bool OpenPoseROSIO::display(const std::shared_ptr<std::vector<op::Datum>>& datum
     return (key == 27);
 }
 
+/*
+ * Returns a CvImagePtr.
+ */
 cv_bridge::CvImagePtr& OpenPoseROSIO::getCvImagePtr()
 {
     return cv_img_ptr_;
@@ -116,74 +153,33 @@ cv_bridge::CvImagePtr& OpenPoseROSIO::getCvImagePtr()
 
 
 /*
- * Log detected keypoints for body, face, and hands to console.
-*/
-void OpenPoseROSIO::printKeypoints(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr)
+ * Gets detected keypoints from OpenPose and publishes them to ROS topic.
+ * Also logs keypoints to console.
+ */
+void OpenPoseROSIO::publishKeypoints(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr)
 {
-    // Example: How to use the pose keypoints
+
+    // TODO: user-specified flag to control printing output to terminal
+    bool consoleOutput = 1;
+
+    // Make sure we have a valid datumsPtr
     if (datumsPtr != nullptr && !datumsPtr->empty())
     {
-        op::log("\nKeypoints:");
-        // Accesing each element of the keypoints
-        const auto& poseKeypoints = datumsPtr->at(0).poseKeypoints;
-        op::log("Person pose keypoints:");
-        for (auto person = 0 ; person < poseKeypoints.getSize(0) ; person++)
-        {
-            op::log("Person " + std::to_string(person) + " (x, y, score):");
-            for (auto bodyPart = 0 ; bodyPart < poseKeypoints.getSize(1) ; bodyPart++)
-            {
-                std::string valueToPrint;
-                for (auto xyscore = 0 ; xyscore < poseKeypoints.getSize(2) ; xyscore++)
-                    valueToPrint += std::to_string(   poseKeypoints[{person, bodyPart, xyscore}]   ) + " ";
-                op::log(valueToPrint);
-            }
-        }
-        op::log(" ");
-        // Alternative: just getting std::string equivalent
-        op::log("Face keypoints: " + datumsPtr->at(0).faceKeypoints.toString());
-        op::log("Left hand keypoints: " + datumsPtr->at(0).handKeypoints[0].toString());
-        op::log("Right hand keypoints: " + datumsPtr->at(0).handKeypoints[1].toString());
-        // Heatmaps
-        const auto& poseHeatMaps = datumsPtr->at(0).poseHeatMaps;
-        if (!poseHeatMaps.empty())
-        {
-            op::log("Pose heatmaps size: [" + std::to_string(poseHeatMaps.getSize(0)) + ", "
-                    + std::to_string(poseHeatMaps.getSize(1)) + ", "
-                    + std::to_string(poseHeatMaps.getSize(2)) + "]");
-            const auto& faceHeatMaps = datumsPtr->at(0).faceHeatMaps;
-            op::log("Face heatmaps size: [" + std::to_string(faceHeatMaps.getSize(0)) + ", "
-                    + std::to_string(faceHeatMaps.getSize(1)) + ", "
-                    + std::to_string(faceHeatMaps.getSize(2)) + ", "
-                    + std::to_string(faceHeatMaps.getSize(3)) + "]");
-            const auto& handHeatMaps = datumsPtr->at(0).handHeatMaps;
-            op::log("Left hand heatmaps size: [" + std::to_string(handHeatMaps[0].getSize(0)) + ", "
-                    + std::to_string(handHeatMaps[0].getSize(1)) + ", "
-                    + std::to_string(handHeatMaps[0].getSize(2)) + ", "
-                    + std::to_string(handHeatMaps[0].getSize(3)) + "]");
-            op::log("Right hand heatmaps size: [" + std::to_string(handHeatMaps[1].getSize(0)) + ", "
-                    + std::to_string(handHeatMaps[1].getSize(1)) + ", "
-                    + std::to_string(handHeatMaps[1].getSize(2)) + ", "
-                    + std::to_string(handHeatMaps[1].getSize(3)) + "]");
-        }
-    }
-    else
-        op::log("Nullptr or empty datumsPtr found.", op::Priority::High, __LINE__, __FUNCTION__, __FILE__);
-}
 
-
-/*
- * Publish detected keypoints from OpenPose for body, face, and hands to ROS node.
- */
-void OpenPoseROSIO::publish(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr)
-{
-    if (datumsPtr != nullptr && !datumsPtr->empty() && !FLAGS_body_disable)
-    {
+        // Get all the pose keypoints from OpenPose
         const auto& poseKeypoints = datumsPtr->at(0).poseKeypoints;
         const auto& faceKeypoints = datumsPtr->at(0).faceKeypoints;
         const auto& leftHandKeypoints = datumsPtr->at(0).handKeypoints[0];
         const auto& rightHandKeypoints = datumsPtr->at(0).handKeypoints[1];
         std::vector<op::Rectangle<float>>& face_rectangles = datumsPtr->at(0).faceRectangles;
 
+        // Get Heatmaps from OpenPose
+        const auto& poseHeatMaps = datumsPtr->at(0).poseHeatMaps;
+        const auto& faceHeatMaps = datumsPtr->at(0).faceHeatMaps;
+        const auto& leftHandHeatMaps = datumsPtr->at(0).handHeatMaps[0];
+        const auto& rightHandHeatMaps = datumsPtr->at(0).handHeatMaps[1];
+
+        // OpenPose ROS msg
         openpose_ros_msgs::OpenPoseHumanList human_list_msg;
         human_list_msg.header.stamp = ros::Time::now();
         human_list_msg.rgb_image_header = rgb_image_header_;
@@ -274,7 +270,86 @@ void OpenPoseROSIO::publish(const std::shared_ptr<std::vector<op::Datum>>& datum
 
         openpose_human_list_pub_.publish(human_list_msg);
 
+
+        // If we are logging output to console, log keypoints and heatmaps
+        if (consoleOutput)
+        {
+
+            printKeypoints(poseKeypoints, faceKeypoints, leftHandKeypoints, rightHandKeypoints);
+            printHeatmaps(poseHeatMaps, faceHeatMaps, leftHandHeatMaps, rightHandHeatMaps);
+
+        }
+
     }
     else
+    {
         op::log("Nullptr or empty datumsPtr found.", op::Priority::High, __LINE__, __FUNCTION__, __FILE__);
+    }
+
+
+    // Return keypoints
+
+}
+
+/*
+ * Prints keypoints to console.
+ */
+template <typename T> void OpenPoseROSIO::printKeypoints(T poseKeypoints, T faceKeypoints,
+                                    T leftHandKeypoints, T rightHandKeypoints)
+{
+
+    op::log("\nKeypoints:");
+
+    // Log person keypoints
+    op::log("Person pose keypoints:");
+    for (auto person = 0 ; person < poseKeypoints.getSize(0) ; person++)
+    {
+        op::log("Person " + std::to_string(person) + " (x, y, score):");
+        for (auto bodyPart = 0 ; bodyPart < poseKeypoints.getSize(1) ; bodyPart++)
+        {
+            std::string valueToPrint;
+            for (auto xyscore = 0 ; xyscore < poseKeypoints.getSize(2) ; xyscore++)
+                valueToPrint += std::to_string(   poseKeypoints[{person, bodyPart, xyscore}]   ) + " ";
+            op::log(valueToPrint);
+        }
+    }
+    op::log(" ");
+
+    // Log hand and face keypoints
+    op::log("Face keypoints: " + faceKeypoints.toString());
+    op::log("Left hand keypoints: " + leftHandKeypoints.toString());
+    op::log("Right hand keypoints: " + rightHandKeypoints.toString());
+
+}
+
+/*
+ * Prints heatmaps to console.
+ */
+template <typename T> void OpenPoseROSIO::printHeatmaps(T poseHeatMaps, T faceHeatMaps,
+                                    T leftHandHeatMaps, T rightHandHeatMaps)
+{
+
+    if (!poseHeatMaps.empty())
+    {
+        // Log pose heatmaps
+        op::log("Pose heatmaps size: [" + std::to_string(poseHeatMaps.getSize(0)) + ", "
+                + std::to_string(poseHeatMaps.getSize(1)) + ", "
+                + std::to_string(poseHeatMaps.getSize(2)) + "]");
+        // Log face heatmaps
+        op::log("Face heatmaps size: [" + std::to_string(faceHeatMaps.getSize(0)) + ", "
+                + std::to_string(faceHeatMaps.getSize(1)) + ", "
+                + std::to_string(faceHeatMaps.getSize(2)) + ", "
+                + std::to_string(faceHeatMaps.getSize(3)) + "]");
+        // Log left hand heatmaps
+        op::log("Left hand heatmaps size: [" + std::to_string(leftHandHeatMaps.getSize(0)) + ", "
+                + std::to_string(leftHandHeatMaps.getSize(1)) + ", "
+                + std::to_string(leftHandHeatMaps.getSize(2)) + ", "
+                + std::to_string(leftHandHeatMaps.getSize(3)) + "]");
+        // Log right hand heatmaps
+        op::log("Right hand heatmaps size: [" + std::to_string(rightHandHeatMaps.getSize(0)) + ", "
+                + std::to_string(rightHandHeatMaps.getSize(1)) + ", "
+                + std::to_string(rightHandHeatMaps.getSize(2)) + ", "
+                + std::to_string(rightHandHeatMaps.getSize(3)) + "]");
+  }
+
 }

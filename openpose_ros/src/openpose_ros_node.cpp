@@ -31,7 +31,7 @@ int openPoseROS()
     op::ConfigureLog::setPriorityThreshold((op::Priority)FLAGS_logging_level);
     op::Profiler::setDefaultX(FLAGS_profile_speed);
 
-    op::log("Starting pose estimation demo.", op::Priority::High);
+    op::log("Starting pose estimation.", op::Priority::High);
     const auto timerBegin = std::chrono::high_resolution_clock::now();
 
     openpose_ros::OpenPose openPose;
@@ -41,7 +41,7 @@ int openPoseROS()
 
     // OpenPose processing
     openpose_ros::OpenPoseROSIO openPoseROSIO(openPose);
-    
+
     ros::spin();
 
     op::log("Stopping thread(s)", op::Priority::High);

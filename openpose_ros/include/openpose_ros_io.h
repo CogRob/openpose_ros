@@ -50,9 +50,14 @@ namespace openpose_ros {
 
             cv_bridge::CvImagePtr& getCvImagePtr();
 
-            void printKeypoints(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr);
+            void publishKeypoints(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr);
 
-            void publish(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr);
+            template <typename T> void printKeypoints(T poseKeypoints, T faceKeypoints,
+                                   T leftHandKeypoints, T rightHandKeypoints);
+
+            template <typename T> void printHeatmaps(T poseHeatMaps, T faceHeatMaps,
+                               T leftHandHeatMaps, T rightHandHeatMaps);
+
     };
 }
 
