@@ -8,10 +8,10 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
-  openpose_ros_msgs
   sensor_msgs
   cv_bridge
   image_transport
+  message_generation
 )
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
@@ -22,9 +22,25 @@ find_package(GFlags)
 find_package(Glog)
 find_package(OpenPose REQUIRED)
 
+
+# ROS Messages
+add_message_files(
+  FILES
+  BoundingBox.msg
+  OpenPoseHuman.msg
+  OpenPoseHumanList.msg
+  PointWithProb.msg
+  HandKeypoints.msg
+)
+
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
+
 catkin_package(
    INCLUDE_DIRS include
-   CATKIN_DEPENDS roscpp rospy std_msgs
+   CATKIN_DEPENDS roscpp rospy std_msgs message_runtime
 )
 
 include_directories( 
