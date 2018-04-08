@@ -47,7 +47,7 @@ void OpenPoseROSIO::processImage(const sensor_msgs::ImageConstPtr& msg)
         human_list = getKeypoints(datumProcessed);
 
         // Publish keypoints from OpenPose to ROS topic and log to console
-        //publishKeypoints(human_list);
+        publishKeypoints(human_list);
 
         // Display frame in window
         display(datumProcessed, human_list);
@@ -112,9 +112,6 @@ bool OpenPoseROSIO::display(const std::shared_ptr<std::vector<op::Datum>>& datum
                             const openpose_ros::OpenPoseHumanList human_list)
 {
 
-    bool faceBoundingBoxShow = 1;
-    bool handBoundingBoxShow = 0;
-
     // User's displaying/saving/other processing here
     // datum.cvOutputData: rendered frame with pose or heatmaps
     // datum.poseKeypoints: Array<float> with the estimated pose
@@ -130,7 +127,7 @@ bool OpenPoseROSIO::display(const std::shared_ptr<std::vector<op::Datum>>& datum
 
         // If we're drawing a bounding box for the face, get points and draw
         // TODO: handle multiple humans! Right now only handling one
-        if (faceBoundingBoxShow && num_humans > 0)
+        if (FLAGS_face && num_humans > 0)
         {
 
             openpose_ros::BoundingBox face_bounding_box = human_list.human_list[0].face_bounding_box;
@@ -139,19 +136,35 @@ bool OpenPoseROSIO::display(const std::shared_ptr<std::vector<op::Datum>>& datum
             float face_width = face_bounding_box.width;
             float face_height = face_bounding_box.height;
 
-            //op::log(face_x);
-            //op::log(face_y);
-
-
-            // Draw face bounding box on image
-            cv::rectangle(outputImg, cv::Point(face_x, face_y),
-                          cv::Point(face_x+face_width, face_y+face_height), (0,255,0), 3);
+            // Draw face bounding box in green on image
+            cv::rectangle(outputImg, cv::Point(face_x, face_y), cv::Point(face_x+face_width, face_y+face_height),
+                                      cv::Scalar(0,255,0), 2);
 
         }
 
         // TODO: If we're drawing bounding boxes for hands, get points and draw
-        if (handBoundingBoxShow && num_humans > 0)
+        if (FLAGS_hand && num_humans > 0)
         {
+            // Draw bounding box for left hand
+            openpose_ros::BoundingBox left_hand_bounding_box = human_list.human_list[0].left_hand_bounding_box;
+            float left_x = left_hand_bounding_box.x;
+            float left_y = left_hand_bounding_box.y;
+            float left_width = left_hand_bounding_box.width;
+            float left_height = left_hand_bounding_box.height;
+
+            cv::rectangle(outputImg, cv::Point(left_x, left_y), cv::Point(left_x+left_width, left_y+left_height),
+                                      cv::Scalar(255,0,0), 2);
+
+            // Draw bounding box for left hand
+            openpose_ros::BoundingBox right_hand_bounding_box = human_list.human_list[0].right_hand_bounding_box;
+            float right_x = right_hand_bounding_box.x;
+            float right_y = right_hand_bounding_box.y;
+            float right_width = right_hand_bounding_box.width;
+            float right_height = right_hand_bounding_box.height;
+
+            cv::rectangle(outputImg, cv::Point(right_x, right_y), cv::Point(right_x+right_width, right_y+right_height),
+                                     cv::Scalar(255,0,0), 2);
+
         }
 
 
@@ -196,7 +209,7 @@ openpose_ros::OpenPoseHumanList OpenPoseROSIO::getKeypoints(
 
         // Pose bounding boxes from OpenPose
         std::vector<op::Rectangle<float>>& face_rectangles = datumsPtr->at(0).faceRectangles;
-        //std::vector<op::Rectangle<float>>& hand_rectangles = datumsPtr->at(0).handRectangles;
+        std::vector<std::array<op::Rectangle<float>, 2>>& hand_rectangles = datumsPtr->at(0).handRectangles;
 
         // Get Heatmaps from OpenPose
         const auto& poseHeatMaps = datumsPtr->at(0).poseHeatMaps;
@@ -298,16 +311,20 @@ openpose_ros::OpenPoseHumanList OpenPoseROSIO::getKeypoints(
                 human.num_left_hand_key_points_with_non_zero_prob = num_left_hand_key_points_with_non_zero_prob;
 
                 // Get points for left hand bounding box
-                /*openpose_ros::BoundingBox left_hand_bounding_box;
-                left_hand_bounding_box.x = hand_rectangles.at(person).x;
-                left_hand_bounding_box.y = hand_rectangles.at(person).y;
-                left_hand_bounding_box.width = hand_rectangles.at(person).width;
-                left_hand_bounding_box.height = hand_rectangles.at(person).height;
+                openpose_ros::BoundingBox left_hand_bounding_box;
+                left_hand_bounding_box.x = hand_rectangles.at(person)[0].x;
+                left_hand_bounding_box.y = hand_rectangles.at(person)[0].y;
+                left_hand_bounding_box.width = hand_rectangles.at(person)[0].width;
+                left_hand_bounding_box.height = hand_rectangles.at(person)[0].height;
                 human.left_hand_bounding_box = left_hand_bounding_box;
 
                 // Get points for right hand bounding box
-                openpose_ros::BoundingBox right_hand_bounding_box;*/
-
+                openpose_ros::BoundingBox right_hand_bounding_box;
+                right_hand_bounding_box.x = hand_rectangles.at(person)[1].x;
+                right_hand_bounding_box.y = hand_rectangles.at(person)[1].y;
+                right_hand_bounding_box.width = hand_rectangles.at(person)[1].width;
+                right_hand_bounding_box.height = hand_rectangles.at(person)[1].height;
+                human.right_hand_bounding_box = right_hand_bounding_box;
 
             }
 
