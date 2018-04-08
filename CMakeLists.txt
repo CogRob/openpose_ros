@@ -60,28 +60,38 @@ include_directories(
   ${OpenCV_INCLUDE_DIRS}
 )
 
-add_executable(${PROJECT_NAME}_2d_node
-  src/openpose_ros_2d_node.cpp
+add_executable(${PROJECT_NAME}_image_node
+  src/openpose_ros_image_node.cpp
   src/openpose.cpp
-  src/openpose_2d_io.cpp
+  src/openpose_image_io.cpp
   src/gflags_options.cpp
 )
 
-#add_executable(${PROJECT_NAME}_3d_node
-  #src/openpose_ros_3d_node.cpp
-  #src/openpose.cpp
-  #src/openpose_3d_io.cpp
-  #src/gflags/options.cpp
-#)
+add_executable(${PROJECT_NAME}_3d_node
+  src/openpose_ros_3d_node.cpp
+  src/openpose.cpp
+  src/openpose_3d_io.cpp
+  src/gflags_options.cpp
+)
 
 add_dependencies(
-  ${PROJECT_NAME}_2d_node
+  ${PROJECT_NAME}_image_node
+  ${PROJECT_NAME}_3d_node
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
 )
 
 target_link_libraries(
-  ${PROJECT_NAME}_2d_node
+  ${PROJECT_NAME}_image_node
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBS}
+  ${OpenPose_LIBS}
+  ${GFLAGS_LIBRARY}
+  ${GLOG_LIBRARY}
+)
+
+target_link_libraries(
+  ${PROJECT_NAME}_3d_node
   ${catkin_LIBRARIES}
   ${OpenCV_LIBS}
   ${OpenPose_LIBS}

@@ -1,5 +1,5 @@
-#ifndef _OPENPOSE_2D_IO
-#define _OPENPOSE_2D_IO
+#ifndef _OPENPOSE_IMAGE_IO
+#define _OPENPOSE_IMAGE_IO
 
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
@@ -26,7 +26,7 @@
 
 namespace openpose_ros {
 
-    class OpenPose2DIO
+    class OpenPoseImageIO
     {
         private:
             ros::NodeHandle nh_;
@@ -39,9 +39,9 @@ namespace openpose_ros {
             OpenPose* openpose_;
 
         public:
-            OpenPose2DIO(OpenPose &openPose);
+            OpenPoseImageIO(OpenPose &openPose);
 
-            ~OpenPose2DIO(){}
+            ~OpenPoseImageIO(){}
 
             void processImage(const sensor_msgs::ImageConstPtr& msg);
 

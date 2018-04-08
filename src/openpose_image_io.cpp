@@ -1,20 +1,20 @@
-#include <openpose_2d_io.h>
+#include <openpose_image_io.h>
 
 using namespace openpose_ros;
 
 /*
  * Subscribes to the input video feed and starts processing.
  */
-OpenPose2DIO::OpenPose2DIO(OpenPose &openPose): it_(nh_)
+OpenPoseImageIO::OpenPoseImageIO(OpenPose &openPose): it_(nh_)
 {
     // Subscribe to input video feed and publish human lists as output
     std::string image_topic;
     std::string output_topic;
 
-    nh_.param("/openpose_ros_2d_node/image_topic", image_topic, std::string("/camera/image_raw"));
-    nh_.param("/openpose_ros_2d_node/output_topic", output_topic, std::string("/openpose_ros/human_list"));
+    nh_.param("/openpose_ros_image_node/image_topic", image_topic, std::string("/camera/image_raw"));
+    nh_.param("/openpose_ros_image_node/output_topic", output_topic, std::string("/openpose_ros/human_list"));
 
-    image_sub_ = it_.subscribe(image_topic, 1, &OpenPose2DIO::processImage, this);
+    image_sub_ = it_.subscribe(image_topic, 1, &OpenPoseImageIO::processImage, this);
     openpose_human_list_pub_ = nh_.advertise<openpose_ros::OpenPoseHumanList>(output_topic, 10);
     cv_img_ptr_ = nullptr;
     openpose_ = &openPose;
@@ -32,7 +32,7 @@ OpenPose2DIO::OpenPose2DIO(OpenPose &openPose): it_(nh_)
  * Then publishes message containing extracted features to ROS topic and
  * displays updated frame in window.
  */
-void OpenPose2DIO::processImage(const sensor_msgs::ImageConstPtr& msg)
+void OpenPoseImageIO::processImage(const sensor_msgs::ImageConstPtr& msg)
 {
     convertImage(msg);
     std::shared_ptr<std::vector<op::Datum>> datumToProcess = createDatum();
@@ -69,7 +69,7 @@ void OpenPose2DIO::processImage(const sensor_msgs::ImageConstPtr& msg)
 /*
  * Converts image from sensor_msgs BGR8 format to OpenCV format.
  */
-void OpenPose2DIO::convertImage(const sensor_msgs::ImageConstPtr& msg)
+void OpenPoseImageIO::convertImage(const sensor_msgs::ImageConstPtr& msg)
 {
     try
     {
@@ -87,7 +87,7 @@ void OpenPose2DIO::convertImage(const sensor_msgs::ImageConstPtr& msg)
 /*
  * Creates vector of datums for processing.
  */
-std::shared_ptr<std::vector<op::Datum>> OpenPose2DIO::createDatum()
+std::shared_ptr<std::vector<op::Datum>> OpenPoseImageIO::createDatum()
 {
     // Close program when empty frame
     if (cv_img_ptr_ == nullptr)
@@ -113,7 +113,7 @@ std::shared_ptr<std::vector<op::Datum>> OpenPose2DIO::createDatum()
  * Also displays bounding boxes for face and hands.
  * TODO: add user-defined flag for bounding box display
  */
-bool OpenPose2DIO::display(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr,
+bool OpenPoseImageIO::display(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr,
                             const openpose_ros::OpenPoseHumanList human_list)
 {
 
@@ -185,7 +185,7 @@ bool OpenPose2DIO::display(const std::shared_ptr<std::vector<op::Datum>>& datums
 /*
  * Returns a CvImagePtr.
  */
-cv_bridge::CvImagePtr& OpenPose2DIO::getCvImagePtr()
+cv_bridge::CvImagePtr& OpenPoseImageIO::getCvImagePtr()
 {
     return cv_img_ptr_;
 }
@@ -195,7 +195,7 @@ cv_bridge::CvImagePtr& OpenPose2DIO::getCvImagePtr()
  * Gets detected keypoints from OpenPose.
  * Returns ROS msg containing list of humans and keypoints for each human.
  */
-openpose_ros::OpenPoseHumanList OpenPose2DIO::processFrame(
+openpose_ros::OpenPoseHumanList OpenPoseImageIO::processFrame(
                                 const std::shared_ptr<std::vector<op::Datum>>& datumsPtr)
 {
 
@@ -270,10 +270,6 @@ openpose_ros::OpenPoseHumanList OpenPose2DIO::processFrame(
 
         human_list_msg.human_list = human_list;
 
-
-
-
-
         // Return list of humans
         return human_list_msg;
 
@@ -295,7 +291,7 @@ openpose_ros::OpenPoseHumanList OpenPose2DIO::processFrame(
 /*
  * Extracts keypoints for each body point given a human from OpenPose.
  */
-template <typename T> openpose_ros::OpenPoseHuman OpenPose2DIO::extractBodyPartKeypoints(
+template <typename T> openpose_ros::OpenPoseHuman OpenPoseImageIO::extractBodyPartKeypoints(
                               T poseKeypoints, openpose_ros::OpenPoseHuman human, int person_num)
 {
 
@@ -324,7 +320,7 @@ template <typename T> openpose_ros::OpenPoseHuman OpenPose2DIO::extractBodyPartK
 /*
  * Extracts keypoints for each face given a human from OpenPose.
  */
-template <typename T> openpose_ros::OpenPoseHuman OpenPose2DIO::extractFaceKeypoints(
+template <typename T> openpose_ros::OpenPoseHuman OpenPoseImageIO::extractFaceKeypoints(
                               T faceKeypoints, std::vector<op::Rectangle<float>>& face_rectangles,
                               openpose_ros::OpenPoseHuman human, int person_num)
 {
@@ -363,7 +359,7 @@ template <typename T> openpose_ros::OpenPoseHuman OpenPose2DIO::extractFaceKeypo
 /*
  * Extracts keypoints for each hand given a human from OpenPose.
  */
-template <typename T> openpose_ros::OpenPoseHuman OpenPose2DIO::extractHandKeypoints(
+template <typename T> openpose_ros::OpenPoseHuman OpenPoseImageIO::extractHandKeypoints(
                               T leftHandKeypoints, T rightHandKeypoints,
                               std::vector<std::array<op::Rectangle<float>, 2>>& hand_rectangles,
                               openpose_ros::OpenPoseHuman human, int person_num)
@@ -427,9 +423,9 @@ template <typename T> openpose_ros::OpenPoseHuman OpenPose2DIO::extractHandKeypo
 
 
 /*
- * TODO: extract heatmaps 
+ * TODO: extract heatmaps
  */
-openpose_ros::OpenPoseHumanList OpenPose2DIO::getHeatMaps(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr,
+openpose_ros::OpenPoseHumanList OpenPoseImageIO::getHeatMaps(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr,
                                         openpose_ros::OpenPoseHumanList human_list)
 {
 
@@ -446,7 +442,7 @@ openpose_ros::OpenPoseHumanList OpenPose2DIO::getHeatMaps(const std::shared_ptr<
 /*
  * Publishes OpenPoseHumanList to ROS topic.
  */
-void OpenPose2DIO::publishKeypoints(const openpose_ros::OpenPoseHumanList human_list)
+void OpenPoseImageIO::publishKeypoints(const openpose_ros::OpenPoseHumanList human_list)
 {
 
     openpose_human_list_pub_.publish(human_list);
@@ -456,7 +452,7 @@ void OpenPose2DIO::publishKeypoints(const openpose_ros::OpenPoseHumanList human_
 /*
  * Prints keypoints to console.
  */
-template <typename T> void OpenPose2DIO::printKeypoints(T poseKeypoints, T faceKeypoints,
+template <typename T> void OpenPoseImageIO::printKeypoints(T poseKeypoints, T faceKeypoints,
                                                   T leftHandKeypoints, T rightHandKeypoints)
 {
 
@@ -487,7 +483,7 @@ template <typename T> void OpenPose2DIO::printKeypoints(T poseKeypoints, T faceK
 /*
  * Prints heatmaps to console.
  */
-template <typename T> void OpenPose2DIO::printHeatmaps(T poseHeatMaps, T faceHeatMaps,
+template <typename T> void OpenPoseImageIO::printHeatmaps(T poseHeatMaps, T faceHeatMaps,
                                                   T leftHandHeatMaps, T rightHandHeatMaps)
 {
 

@@ -20,7 +20,7 @@
 #include <thread> // std::this_thread
 
 #include <openpose.h>
-#include <openpose_2d_io.h>
+#include <openpose_image_io.h>
 #include <gflags_options.h>
 
 int openPoseROS()
@@ -40,7 +40,7 @@ int openPoseROS()
     openPose.start();
 
     // OpenPose processing
-    openpose_ros::OpenPose2DIO openPose2DIO(openPose);
+    openpose_ros::OpenPoseImageIO openPoseImageIO(openPose);
 
     ros::spin();
 
@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
     gflags::ParseCommandLineFlags(&argc, &argv, true);
 
     // Initializing ros
-    ros::init(argc, argv, "openpose_2d_node");
+    ros::init(argc, argv, "openpose_image_node");
 
     // Running openPoseROS
     return openPoseROS();
