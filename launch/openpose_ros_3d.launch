@@ -1,0 +1,12 @@
+<launch>
+
+  <!-- Launch openpose_ros image node -->
+  <include file="$(find openpose_ros)/launch/openpose_ros.launch" />
+
+  <!-- Launch openpose_ros 3D node -->
+  <node pkg="openpose_ros" type="openpose_ros_3d_node" name="openpose_ros_3d_node" output="screen">
+    <param name="pc_topic" value="/camera/depth/image" />
+    <param name="output_topic" value="/openpose_ros/human_list" />
+  </node>
+
+</launch>
