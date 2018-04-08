@@ -9,3 +9,7 @@ PointWithProb[18] body_key_points_with_prob
 PointWithProb[70] face_key_points_with_prob
 PointWithProb[21] right_hand_key_points_with_prob
 PointWithProb[21] left_hand_key_points_with_prob
+FaceFeatures face_features
+BodyFeatures body_features
+FaceFeatures3D face_features_3d
+BodyFeatures3D body_features_3d

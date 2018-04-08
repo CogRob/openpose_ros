@@ -69,8 +69,8 @@ DEFINE_bool(part_candidates,            false,          "Also enable `write_json
                                                         " use this information.");
 // OpenPose Face
 DEFINE_bool(face,                       false,          "Enables face keypoint detection. It will share some parameters from the body pose, e.g."
-                                                        " `model_folder`. Note that this will considerable slow down the performance and increse"
-                                                        " the required GPU memory. In addition, the greater number of people on the image, the"
+                                                        " `model_folder`. Note that this will considerably slow down the performance and increse"
+                                                        " the required GPU memory. In addition, the greater the number of people on the image, the"
                                                         " slower OpenPose will be.");
 DEFINE_string(face_net_resolution,      "368x368",      "Multiples of 16 and squared. Analogous to `net_resolution` but applied to the face keypoint"
                                                         " detector. 320x320 usually works fine while giving a substantial speed up when multiple"
@@ -93,7 +93,7 @@ DEFINE_bool(hand_tracking,              false,          "Adding hand tracking mi
 // OpenPose 3-D Reconstruction
 DEFINE_bool(3d,                         false,          "Running OpenPose 3-D reconstruction demo: 1) Reading from a stereo camera system."
                                                         " 2) Performing 3-D reconstruction from the multiple views. 3) Displaying 3-D reconstruction"
-                                                        " results. Note that it will only display 1 person. If multiple people is present, it will"
+                                                        " results. Note that it will only display 1 person. If multiple people are present, it will"
                                                         " fail.");
 // OpenPose Rendering
 DEFINE_int32(part_to_show,              0,              "Prediction channel to visualize (default: 0). 0 for all the body parts, 1-18 for each body"

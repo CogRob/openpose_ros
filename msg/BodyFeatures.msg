@@ -1,0 +1,13 @@
+BodyPart chest
+BodyPart right_shoulder
+BodyPart left_shoulder
+BodyPart right_elbow
+BodyPart left_elbow
+BodyPart right_wrist
+BodyPart left_wrist
+BodyPart right_hip
+BodyPart left_hip
+BodyPart right_knee
+BodyPart left_knee
+BodyPart right_ankle
+BodyPart left_ankle

@@ -14,6 +14,9 @@
 #include <openpose_ros/OpenPoseHumanList.h>
 #include <openpose_ros/PointWithProb.h>
 #include <openpose_ros/HandKeypoints.h>
+#include <openpose_ros/FaceFeatures.h>
+#include <openpose_ros/BodyFeatures.h>
+#include <openpose_ros/BodyPart.h>
 
 #include <openpose.h>
 #include <gflags_options.h>

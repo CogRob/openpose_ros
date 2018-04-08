@@ -31,6 +31,12 @@ add_message_files(
   OpenPoseHumanList.msg
   PointWithProb.msg
   HandKeypoints.msg
+  FaceFeatures.msg
+  FaceFeatures3D.msg
+  BodyFeatures.msg
+  BodyFeatures3D.msg
+  BodyPart.msg
+  BodyPart3D.msg
 )
 
 generate_messages(
