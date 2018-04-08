@@ -33,7 +33,6 @@ namespace openpose_ros {
             ros::Publisher openpose_human_list_pub_;
             image_transport::ImageTransport it_;
             image_transport::Subscriber image_sub_;
-            message_filters::Subscriber<sensor_msgs::PointCloud2> pc_sub_;
             cv_bridge::CvImagePtr cv_img_ptr_;
             std_msgs::Header rgb_image_header_;
 
@@ -44,26 +43,7 @@ namespace openpose_ros {
 
             ~OpenPose3DIO(){}
 
-            void processImage(const sensor_msgs::ImageConstPtr& msg);
-
-            void convertImage(const sensor_msgs::ImageConstPtr& msg);
-
-            std::shared_ptr<std::vector<op::Datum>> createDatum();
-
-            bool display(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr,
-                         const openpose_ros::OpenPoseHumanList);
-
-            cv_bridge::CvImagePtr& getCvImagePtr();
-
-            openpose_ros::OpenPoseHumanList getKeypoints(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr);
-
-            void publishKeypoints(const openpose_ros::OpenPoseHumanList);
-
-            template <typename T> void printKeypoints(T poseKeypoints, T faceKeypoints,
-                                              T leftHandKeypoints, T rightHandKeypoints);
-
-            template <typename T> void printHeatmaps(T poseHeatMaps, T faceHeatMaps,
-                                              T leftHandHeatMaps, T rightHandHeatMaps);
+            void processPointCloud();
 
     };
 }
