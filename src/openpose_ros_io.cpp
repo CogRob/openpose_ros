@@ -3,7 +3,7 @@
 using namespace openpose_ros;
 
 /*
- * Subscribes to the input video feed, publishes human lists from OpenPose.
+ * Subscribes to the input video feed and starts processing.
  */
 OpenPoseROSIO::OpenPoseROSIO(OpenPose &openPose): it_(nh_)
 {
@@ -41,11 +41,16 @@ void OpenPoseROSIO::processImage(const sensor_msgs::ImageConstPtr& msg)
     if (successfullyEmplaced && openpose_->waitAndPop(datumProcessed))
     {
 
+        openpose_ros::OpenPoseHumanList human_list;
+
+        // Get updated keypoints from OpenPose
+        human_list = getKeypoints(datumProcessed);
+
         // Publish keypoints from OpenPose to ROS topic and log to console
-        publishKeypoints(datumProcessed);
+        publishKeypoints(human_list);
 
         // Display frame in window
-        display(datumProcessed);
+        display(datumProcessed, human_list);
 
     }
     else
@@ -103,7 +108,8 @@ std::shared_ptr<std::vector<op::Datum>> OpenPoseROSIO::createDatum()
  * Also displays bounding boxes for face and hands.
  * TODO: add user-defined flag for bounding box display
  */
-bool OpenPoseROSIO::display(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr)
+bool OpenPoseROSIO::display(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr,
+                            const openpose_ros::OpenPoseHumanList human_list)
 {
 
     bool faceBoundingBoxShow = 1;
@@ -120,19 +126,31 @@ bool OpenPoseROSIO::display(const std::shared_ptr<std::vector<op::Datum>>& datum
         cv::Mat outputImg = datumsPtr->at(0).cvOutputData;
 
         // If we're drawing a bounding box for the face, get points and draw
+        // TODO: handle multiple humans! Right now only handling one
         if (faceBoundingBoxShow)
         {
 
+            openpose_ros::BoundingBox face_bounding_box = human_list.human_list[0].face_bounding_box;
+            float face_x = face_bounding_box.x;
+            float face_y = face_bounding_box.y;
+            float face_width = face_bounding_box.width;
+            float face_height = face_bounding_box.height;
+
+            //op::log(face_x);
+            //op::log(face_y);
+
+
+            // Draw face bounding box on image
+            cv::rectangle(outputImg, cv::Point(face_x, face_y),
+                          cv::Point(face_x+face_width, face_y+face_height), (0,255,0), 3);
+
         }
 
+        // TODO: If we're drawing bounding boxes for hands, get points and draw
+        if (handBoundingBoxShow)
+        {
+        }
 
-        // If we're drawing a bounding box for hands, get points and draw
-
-        // try to draw a circle
-        cv::Point pt = cv::Point(250,250);
-        int thickness = 1;
-        int lineType = 8;
-        cv::circle(outputImg, pt, 50, cv::Scalar( 0, 0, 255 ), thickness, lineType);
 
         cv::imshow("OpenPose Output", outputImg);
         // Display image and sleeps at least 1 ms (it usually sleeps ~5-10 msec to display the image)
@@ -153,10 +171,11 @@ cv_bridge::CvImagePtr& OpenPoseROSIO::getCvImagePtr()
 
 
 /*
- * Gets detected keypoints from OpenPose and publishes them to ROS topic.
- * Also logs keypoints to console.
+ * Gets detected keypoints from OpenPose.
+ * Returns ROS msg containing list of humans and keypoints for each human.
  */
-void OpenPoseROSIO::publishKeypoints(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr)
+openpose_ros::OpenPoseHumanList OpenPoseROSIO::getKeypoints(
+                                const std::shared_ptr<std::vector<op::Datum>>& datumsPtr)
 {
 
     // TODO: user-specified flag to control printing output to terminal
@@ -171,7 +190,10 @@ void OpenPoseROSIO::publishKeypoints(const std::shared_ptr<std::vector<op::Datum
         const auto& faceKeypoints = datumsPtr->at(0).faceKeypoints;
         const auto& leftHandKeypoints = datumsPtr->at(0).handKeypoints[0];
         const auto& rightHandKeypoints = datumsPtr->at(0).handKeypoints[1];
+
+        // Pose bounding boxes from OpenPose
         std::vector<op::Rectangle<float>>& face_rectangles = datumsPtr->at(0).faceRectangles;
+        //std::vector<op::Rectangle<float>>& hand_rectangles = datumsPtr->at(0).handRectangles;
 
         // Get Heatmaps from OpenPose
         const auto& poseHeatMaps = datumsPtr->at(0).poseHeatMaps;
@@ -206,6 +228,7 @@ void OpenPoseROSIO::publishKeypoints(const std::shared_ptr<std::vector<op::Datum
             }
             human.num_body_key_points_with_non_zero_prob = num_body_key_points_with_non_zero_prob;
 
+            // If OpenPose is supposed to get face keypoints
             if(FLAGS_face)
             {
                 int num_face_key_points_with_non_zero_prob = 0;
@@ -224,6 +247,7 @@ void OpenPoseROSIO::publishKeypoints(const std::shared_ptr<std::vector<op::Datum
                 }
                 human.num_face_key_points_with_non_zero_prob = num_face_key_points_with_non_zero_prob;
 
+                // Get points for face bounding box
                 openpose_ros::BoundingBox face_bounding_box;
                 face_bounding_box.x = face_rectangles.at(person).x;
                 face_bounding_box.y = face_rectangles.at(person).y;
@@ -232,6 +256,7 @@ void OpenPoseROSIO::publishKeypoints(const std::shared_ptr<std::vector<op::Datum
                 human.face_bounding_box = face_bounding_box;
             }
 
+            // If OpenPose is supposed to detect hands
             if(FLAGS_hand)
             {
 
@@ -242,25 +267,45 @@ void OpenPoseROSIO::publishKeypoints(const std::shared_ptr<std::vector<op::Datum
                 {
                     openpose_ros::PointWithProb right_hand_point_with_prob;
                     openpose_ros::PointWithProb left_hand_point_with_prob;
+
                     right_hand_point_with_prob.x = rightHandKeypoints[{person, handPart, 0}];
                     right_hand_point_with_prob.y = rightHandKeypoints[{person, handPart, 1}];
                     right_hand_point_with_prob.prob = rightHandKeypoints[{person, handPart, 2}];
+
                     if(right_hand_point_with_prob.prob > 0)
                     {
                         num_right_hand_key_points_with_non_zero_prob++;
                     }
+
                     left_hand_point_with_prob.x = leftHandKeypoints[{person, handPart, 0}];
                     left_hand_point_with_prob.y = leftHandKeypoints[{person, handPart, 1}];
                     left_hand_point_with_prob.prob = leftHandKeypoints[{person, handPart, 2}];
+
+
                     if(left_hand_point_with_prob.prob > 0)
                     {
                         num_left_hand_key_points_with_non_zero_prob++;
                     }
+
                     human.right_hand_key_points_with_prob.at(handPart) = right_hand_point_with_prob;
                     human.left_hand_key_points_with_prob.at(handPart) = left_hand_point_with_prob;
                 }
+
                 human.num_right_hand_key_points_with_non_zero_prob = num_right_hand_key_points_with_non_zero_prob;
                 human.num_left_hand_key_points_with_non_zero_prob = num_left_hand_key_points_with_non_zero_prob;
+
+                // Get points for left hand bounding box
+                /*openpose_ros::BoundingBox left_hand_bounding_box;
+                left_hand_bounding_box.x = hand_rectangles.at(person).x;
+                left_hand_bounding_box.y = hand_rectangles.at(person).y;
+                left_hand_bounding_box.width = hand_rectangles.at(person).width;
+                left_hand_bounding_box.height = hand_rectangles.at(person).height;
+                human.left_hand_bounding_box = left_hand_bounding_box;
+
+                // Get points for right hand bounding box
+                openpose_ros::BoundingBox right_hand_bounding_box;*/
+
+
             }
 
             human_list.at(person) = human;
@@ -268,7 +313,7 @@ void OpenPoseROSIO::publishKeypoints(const std::shared_ptr<std::vector<op::Datum
 
         human_list_msg.human_list = human_list;
 
-        openpose_human_list_pub_.publish(human_list_msg);
+        //openpose_human_list_pub_.publish(human_list_msg);
 
 
         // If we are logging output to console, log keypoints and heatmaps
@@ -280,14 +325,29 @@ void OpenPoseROSIO::publishKeypoints(const std::shared_ptr<std::vector<op::Datum
 
         }
 
+        // Return list of humans
+        return human_list_msg;
+
     }
     else
     {
         op::log("Nullptr or empty datumsPtr found.", op::Priority::High, __LINE__, __FUNCTION__, __FILE__);
+
+        // Return null
+        // TODO: test for nullptr later when publishing, etc
+        openpose_ros::OpenPoseHumanList human_list_msg;
+        return human_list_msg;
     }
 
+}
 
-    // Return keypoints
+/*
+ * Publishes OpenPoseHumanList to ROS topic.
+ */
+void OpenPoseROSIO::publishKeypoints(const openpose_ros::OpenPoseHumanList human_list)
+{
+    // Publish to ROS topic
+    openpose_human_list_pub_.publish(human_list);
 
 }
 
@@ -295,7 +355,7 @@ void OpenPoseROSIO::publishKeypoints(const std::shared_ptr<std::vector<op::Datum
  * Prints keypoints to console.
  */
 template <typename T> void OpenPoseROSIO::printKeypoints(T poseKeypoints, T faceKeypoints,
-                                    T leftHandKeypoints, T rightHandKeypoints)
+                                                  T leftHandKeypoints, T rightHandKeypoints)
 {
 
     op::log("\nKeypoints:");
@@ -326,7 +386,7 @@ template <typename T> void OpenPoseROSIO::printKeypoints(T poseKeypoints, T face
  * Prints heatmaps to console.
  */
 template <typename T> void OpenPoseROSIO::printHeatmaps(T poseHeatMaps, T faceHeatMaps,
-                                    T leftHandHeatMaps, T rightHandHeatMaps)
+                                                  T leftHandHeatMaps, T rightHandHeatMaps)
 {
 
     if (!poseHeatMaps.empty())

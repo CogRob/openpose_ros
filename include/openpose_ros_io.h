@@ -46,17 +46,20 @@ namespace openpose_ros {
 
             std::shared_ptr<std::vector<op::Datum>> createDatum();
 
-            bool display(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr);
+            bool display(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr,
+                         const openpose_ros::OpenPoseHumanList);
 
             cv_bridge::CvImagePtr& getCvImagePtr();
 
-            void publishKeypoints(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr);
+            openpose_ros::OpenPoseHumanList getKeypoints(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr);
+
+            void publishKeypoints(const openpose_ros::OpenPoseHumanList);
 
             template <typename T> void printKeypoints(T poseKeypoints, T faceKeypoints,
-                                   T leftHandKeypoints, T rightHandKeypoints);
+                                              T leftHandKeypoints, T rightHandKeypoints);
 
             template <typename T> void printHeatmaps(T poseHeatMaps, T faceHeatMaps,
-                               T leftHandHeatMaps, T rightHandHeatMaps);
+                                              T leftHandHeatMaps, T rightHandHeatMaps);
 
     };
 }
