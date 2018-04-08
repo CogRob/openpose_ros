@@ -47,7 +47,7 @@ void OpenPoseROSIO::processImage(const sensor_msgs::ImageConstPtr& msg)
         human_list = getKeypoints(datumProcessed);
 
         // Publish keypoints from OpenPose to ROS topic and log to console
-        publishKeypoints(human_list);
+        //publishKeypoints(human_list);
 
         // Display frame in window
         display(datumProcessed, human_list);
@@ -125,9 +125,12 @@ bool OpenPoseROSIO::display(const std::shared_ptr<std::vector<op::Datum>>& datum
         // Get rendered image from OpenPose
         cv::Mat outputImg = datumsPtr->at(0).cvOutputData;
 
+        // get number of humans
+        int num_humans = human_list.num_humans;
+
         // If we're drawing a bounding box for the face, get points and draw
         // TODO: handle multiple humans! Right now only handling one
-        if (faceBoundingBoxShow)
+        if (faceBoundingBoxShow && num_humans > 0)
         {
 
             openpose_ros::BoundingBox face_bounding_box = human_list.human_list[0].face_bounding_box;
@@ -147,7 +150,7 @@ bool OpenPoseROSIO::display(const std::shared_ptr<std::vector<op::Datum>>& datum
         }
 
         // TODO: If we're drawing bounding boxes for hands, get points and draw
-        if (handBoundingBoxShow)
+        if (handBoundingBoxShow && num_humans > 0)
         {
         }
 
@@ -313,8 +316,6 @@ openpose_ros::OpenPoseHumanList OpenPoseROSIO::getKeypoints(
 
         human_list_msg.human_list = human_list;
 
-        //openpose_human_list_pub_.publish(human_list_msg);
-
 
         // If we are logging output to console, log keypoints and heatmaps
         if (consoleOutput)
@@ -324,6 +325,7 @@ openpose_ros::OpenPoseHumanList OpenPoseROSIO::getKeypoints(
             printHeatmaps(poseHeatMaps, faceHeatMaps, leftHandHeatMaps, rightHandHeatMaps);
 
         }
+
 
         // Return list of humans
         return human_list_msg;
@@ -346,7 +348,7 @@ openpose_ros::OpenPoseHumanList OpenPoseROSIO::getKeypoints(
  */
 void OpenPoseROSIO::publishKeypoints(const openpose_ros::OpenPoseHumanList human_list)
 {
-    // Publish to ROS topic
+
     openpose_human_list_pub_.publish(human_list);
 
 }
