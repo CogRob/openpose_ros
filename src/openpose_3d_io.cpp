@@ -1,20 +1,27 @@
-#include <openpose_ros_io.h>
+#include <openpose_3d_io.h>
 
 using namespace openpose_ros;
 
 /*
  * Subscribes to the input video feed and starts processing.
  */
-OpenPoseROSIO::OpenPoseROSIO(OpenPose &openPose): it_(nh_)
+OpenPose3DIO::OpenPose3DIO(OpenPose &openPose): it_(nh_)
 {
     // Subscribe to input video feed and publish human lists as output
     std::string image_topic;
     std::string output_topic;
+    std::string pc_topic;
 
     nh_.param("/openpose_ros_node/image_topic", image_topic, std::string("/camera/image_raw"));
+    nh_.param("/openpose_ros_node/pc_topic", pc_topic, std::string("/PointCloud2"));
     nh_.param("/openpose_ros_node/output_topic", output_topic, std::string("/openpose_ros/human_list"));
 
-    image_sub_ = it_.subscribe(image_topic, 1, &OpenPoseROSIO::processImage, this);
+    // Subscribe to images from camera
+    image_sub_ = it_.subscribe(image_topic, 1, &OpenPose3DIO::processImage, this);
+
+    // Subscribe to point clouds from depth sensor
+    //pc_sub_ = it_.subscribe(pc_topic, 1, &OpenPose3DIO::processPointCloud, this);
+
     openpose_human_list_pub_ = nh_.advertise<openpose_ros::OpenPoseHumanList>(output_topic, 10);
     cv_img_ptr_ = nullptr;
     openpose_ = &openPose;
@@ -27,7 +34,7 @@ OpenPoseROSIO::OpenPoseROSIO(OpenPose &openPose): it_(nh_)
  * After OpenPose has processed image, display updated frame in window, print
  * keypoints to terminal, and publish keypoints to ROS topic.
  */
-void OpenPoseROSIO::processImage(const sensor_msgs::ImageConstPtr& msg)
+void OpenPose3DIO::processImage(const sensor_msgs::ImageConstPtr& msg)
 {
     convertImage(msg);
     std::shared_ptr<std::vector<op::Datum>> datumToProcess = createDatum();
@@ -64,7 +71,7 @@ void OpenPoseROSIO::processImage(const sensor_msgs::ImageConstPtr& msg)
 /*
  * Converts image from sensor_msgs BGR8 format to OpenCV format.
  */
-void OpenPoseROSIO::convertImage(const sensor_msgs::ImageConstPtr& msg)
+void OpenPose3DIO::convertImage(const sensor_msgs::ImageConstPtr& msg)
 {
     try
     {
@@ -82,7 +89,7 @@ void OpenPoseROSIO::convertImage(const sensor_msgs::ImageConstPtr& msg)
 /*
  * Creates vector of datums for processing.
  */
-std::shared_ptr<std::vector<op::Datum>> OpenPoseROSIO::createDatum()
+std::shared_ptr<std::vector<op::Datum>> OpenPose3DIO::createDatum()
 {
     // Close program when empty frame
     if (cv_img_ptr_ == nullptr)
@@ -108,7 +115,7 @@ std::shared_ptr<std::vector<op::Datum>> OpenPoseROSIO::createDatum()
  * Also displays bounding boxes for face and hands.
  * TODO: add user-defined flag for bounding box display
  */
-bool OpenPoseROSIO::display(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr,
+bool OpenPose3DIO::display(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr,
                             const openpose_ros::OpenPoseHumanList human_list)
 {
 
@@ -180,7 +187,7 @@ bool OpenPoseROSIO::display(const std::shared_ptr<std::vector<op::Datum>>& datum
 /*
  * Returns a CvImagePtr.
  */
-cv_bridge::CvImagePtr& OpenPoseROSIO::getCvImagePtr()
+cv_bridge::CvImagePtr& OpenPose3DIO::getCvImagePtr()
 {
     return cv_img_ptr_;
 }
@@ -190,7 +197,7 @@ cv_bridge::CvImagePtr& OpenPoseROSIO::getCvImagePtr()
  * Gets detected keypoints from OpenPose.
  * Returns ROS msg containing list of humans and keypoints for each human.
  */
-openpose_ros::OpenPoseHumanList OpenPoseROSIO::getKeypoints(
+openpose_ros::OpenPoseHumanList OpenPose3DIO::getKeypoints(
                                 const std::shared_ptr<std::vector<op::Datum>>& datumsPtr)
 {
 
@@ -363,7 +370,7 @@ openpose_ros::OpenPoseHumanList OpenPoseROSIO::getKeypoints(
 /*
  * Publishes OpenPoseHumanList to ROS topic.
  */
-void OpenPoseROSIO::publishKeypoints(const openpose_ros::OpenPoseHumanList human_list)
+void OpenPose3DIO::publishKeypoints(const openpose_ros::OpenPoseHumanList human_list)
 {
 
     openpose_human_list_pub_.publish(human_list);
@@ -373,7 +380,7 @@ void OpenPoseROSIO::publishKeypoints(const openpose_ros::OpenPoseHumanList human
 /*
  * Prints keypoints to console.
  */
-template <typename T> void OpenPoseROSIO::printKeypoints(T poseKeypoints, T faceKeypoints,
+template <typename T> void OpenPose3DIO::printKeypoints(T poseKeypoints, T faceKeypoints,
                                                   T leftHandKeypoints, T rightHandKeypoints)
 {
 
@@ -404,7 +411,7 @@ template <typename T> void OpenPoseROSIO::printKeypoints(T poseKeypoints, T face
 /*
  * Prints heatmaps to console.
  */
-template <typename T> void OpenPoseROSIO::printHeatmaps(T poseHeatMaps, T faceHeatMaps,
+template <typename T> void OpenPose3DIO::printHeatmaps(T poseHeatMaps, T faceHeatMaps,
                                                   T leftHandHeatMaps, T rightHandHeatMaps)
 {
 

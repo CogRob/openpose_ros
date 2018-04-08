@@ -1,6 +1,6 @@
 // ------------------------- OpenPose Library Tutorial - Wrapper - Example 1 - Asynchronous -------------------------
-// Asynchronous mode: ideal for fast prototyping when performance is not an issue. The user emplaces/pushes and pops frames from the OpenPose wrapper
-// when he desires to.
+// Asynchronous mode: ideal for fast prototyping when performance is not an issue. The user emplaces/pushes
+// and pops frames from the OpenPose wrapper when they desire to.
 
 // This example shows the user how to use the OpenPose wrapper class:
     // 1. User reads images
@@ -20,7 +20,7 @@
 #include <thread> // std::this_thread
 
 #include <openpose.h>
-#include <openpose_ros_io.h>
+#include <openpose_2d_io.h>
 #include <gflags_options.h>
 
 int openPoseROS()
@@ -40,7 +40,7 @@ int openPoseROS()
     openPose.start();
 
     // OpenPose processing
-    openpose_ros::OpenPoseROSIO openPoseROSIO(openPose);
+    openpose_ros::OpenPose2DIO openPose2DIO(openPose);
 
     ros::spin();
 
@@ -51,7 +51,7 @@ int openPoseROS()
     const auto now = std::chrono::high_resolution_clock::now();
     const auto totalTimeSec = (double)std::chrono::duration_cast<std::chrono::nanoseconds>(now-timerBegin).count()
                             * 1e-9;
-    const auto message = "Real-time pose estimation demo successfully finished. Total time: "
+    const auto message = "Real-time pose estimation successfully finished. Total time: "
                        + std::to_string(totalTimeSec) + " seconds.";
     op::log(message, op::Priority::High);
 
@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
     gflags::ParseCommandLineFlags(&argc, &argv, true);
 
     // Initializing ros
-    ros::init(argc, argv, "openpose_ros_node");
+    ros::init(argc, argv, "openpose_2d_node");
 
     // Running openPoseROS
     return openPoseROS();

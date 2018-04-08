@@ -1,5 +1,5 @@
-#ifndef _OPENPOSE_ROS_IO
-#define _OPENPOSE_ROS_IO
+#ifndef _OPENPOSE_3D_IO
+#define _OPENPOSE_3D_IO
 
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
@@ -14,9 +14,9 @@
 #include <openpose_ros/OpenPoseHumanList.h>
 #include <openpose_ros/PointWithProb.h>
 #include <openpose_ros/HandKeypoints.h>
-#include <openpose_ros/FaceFeatures.h>
-#include <openpose_ros/BodyFeatures.h>
-#include <openpose_ros/BodyPart.h>
+#include <openpose_ros/FaceFeatures3D.h>
+#include <openpose_ros/BodyFeatures3D.h>
+#include <openpose_ros/BodyPart3D.h>
 
 #include <openpose.h>
 #include <gflags_options.h>
@@ -26,22 +26,23 @@
 
 namespace openpose_ros {
 
-    class OpenPoseROSIO
+    class OpenPose3DIO
     {
         private:
             ros::NodeHandle nh_;
             ros::Publisher openpose_human_list_pub_;
             image_transport::ImageTransport it_;
             image_transport::Subscriber image_sub_;
+            message_filters::Subscriber<sensor_msgs::PointCloud2> pc_sub_;
             cv_bridge::CvImagePtr cv_img_ptr_;
             std_msgs::Header rgb_image_header_;
 
             OpenPose* openpose_;
 
         public:
-            OpenPoseROSIO(OpenPose &openPose);
+            OpenPose3DIO(OpenPose &openPose);
 
-            ~OpenPoseROSIO(){}
+            ~OpenPose3DIO(){}
 
             void processImage(const sensor_msgs::ImageConstPtr& msg);
 
