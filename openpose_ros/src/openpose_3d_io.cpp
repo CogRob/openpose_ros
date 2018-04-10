@@ -17,7 +17,7 @@ OpenPose3DIO::OpenPose3DIO(OpenPose &openPose): it_(nh_)
     // Subscribe to point clouds from depth sensor
     //pc_sub_ = it_.subscribe(pc_topic, 1, &OpenPose3DIO::processPointCloud, this);
 
-    //openpose_human_list_pub_ = nh_.advertise<openpose_ros::OpenPoseHumanList>(output_topic, 10);
+    //openpose_human_list_pub_ = nh_.advertise<openpose_ros_msgs::OpenPoseHumanList>(output_topic, 10);
 
     cv_img_ptr_ = nullptr;
     openpose_ = &openPose;

@@ -15,7 +15,7 @@ OpenPoseImageIO::OpenPoseImageIO(OpenPose &openPose): it_(nh_)
     nh_.param("/openpose_ros_image_node/output_topic", output_topic, std::string("/openpose_ros/human_list"));
 
     image_sub_ = it_.subscribe(image_topic, 1, &OpenPoseImageIO::processImage, this);
-    openpose_human_list_pub_ = nh_.advertise<openpose_ros::OpenPoseHumanList>(output_topic, 10);
+    openpose_human_list_pub_ = nh_.advertise<openpose_ros_msgs::OpenPoseHumanList>(output_topic, 10);
     cv_img_ptr_ = nullptr;
     openpose_ = &openPose;
 }
@@ -46,7 +46,7 @@ void OpenPoseImageIO::processImage(const sensor_msgs::ImageConstPtr& msg)
     if (successfullyEmplaced && openpose_->waitAndPop(datumProcessed))
     {
 
-        openpose_ros::OpenPoseHumanList human_list;
+        openpose_ros_msgs::OpenPoseHumanList human_list;
 
         // Get updated keypoints from OpenPose
         human_list = processFrame(datumProcessed);
@@ -114,7 +114,7 @@ std::shared_ptr<std::vector<op::Datum>> OpenPoseImageIO::createDatum()
  * TODO: add user-defined flag for bounding box display
  */
 bool OpenPoseImageIO::display(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr,
-                            const openpose_ros::OpenPoseHumanList human_list)
+                            const openpose_ros_msgs::OpenPoseHumanList human_list)
 {
 
     // User's displaying/saving/other processing here
@@ -135,7 +135,7 @@ bool OpenPoseImageIO::display(const std::shared_ptr<std::vector<op::Datum>>& dat
         if (FLAGS_face && num_humans > 0)
         {
 
-            openpose_ros::BoundingBox face_bounding_box = human_list.human_list[0].face_bounding_box;
+            openpose_ros_msgs::BoundingBox face_bounding_box = human_list.human_list[0].face_bounding_box;
             float face_x = face_bounding_box.x;
             float face_y = face_bounding_box.y;
             float face_width = face_bounding_box.width;
@@ -151,7 +151,7 @@ bool OpenPoseImageIO::display(const std::shared_ptr<std::vector<op::Datum>>& dat
         if (FLAGS_hand && num_humans > 0)
         {
             // Draw bounding box for left hand
-            openpose_ros::BoundingBox left_hand_bounding_box = human_list.human_list[0].left_hand_bounding_box;
+            openpose_ros_msgs::BoundingBox left_hand_bounding_box = human_list.human_list[0].left_hand_bounding_box;
             float left_x = left_hand_bounding_box.x;
             float left_y = left_hand_bounding_box.y;
             float left_width = left_hand_bounding_box.width;
@@ -161,7 +161,7 @@ bool OpenPoseImageIO::display(const std::shared_ptr<std::vector<op::Datum>>& dat
                                       cv::Scalar(255,0,0), 2);
 
             // Draw bounding box for left hand
-            openpose_ros::BoundingBox right_hand_bounding_box = human_list.human_list[0].right_hand_bounding_box;
+            openpose_ros_msgs::BoundingBox right_hand_bounding_box = human_list.human_list[0].right_hand_bounding_box;
             float right_x = right_hand_bounding_box.x;
             float right_y = right_hand_bounding_box.y;
             float right_width = right_hand_bounding_box.width;
@@ -195,7 +195,7 @@ cv_bridge::CvImagePtr& OpenPoseImageIO::getCvImagePtr()
  * Gets detected keypoints from OpenPose.
  * Returns ROS msg containing list of humans and keypoints for each human.
  */
-openpose_ros::OpenPoseHumanList OpenPoseImageIO::processFrame(
+openpose_ros_msgs::OpenPoseHumanList OpenPoseImageIO::processFrame(
                                 const std::shared_ptr<std::vector<op::Datum>>& datumsPtr)
 {
 
@@ -212,13 +212,13 @@ openpose_ros::OpenPoseHumanList OpenPoseImageIO::processFrame(
         int num_humans = poseKeypoints.getSize(0);
 
         // OpenPoseHumanList ROS msg
-        openpose_ros::OpenPoseHumanList human_list_msg;
+        openpose_ros_msgs::OpenPoseHumanList human_list_msg;
         human_list_msg.header.stamp = ros::Time::now();
         human_list_msg.rgb_image_header = rgb_image_header_;
         human_list_msg.num_humans = num_humans;
 
         // Vector containing OpenPoseHuman msg with keypoints for each human
-        std::vector<openpose_ros::OpenPoseHuman> human_list(num_humans);
+        std::vector<openpose_ros_msgs::OpenPoseHuman> human_list(num_humans);
 
 
         // Process every human detected in the frame
@@ -226,7 +226,7 @@ openpose_ros::OpenPoseHumanList OpenPoseImageIO::processFrame(
         {
 
             // Message for storing each individual human
-            openpose_ros::OpenPoseHuman human;
+            openpose_ros_msgs::OpenPoseHuman human;
 
             // Extract detected body parts
             human = extractBodyPartKeypoints(poseKeypoints, human, person);
@@ -280,7 +280,7 @@ openpose_ros::OpenPoseHumanList OpenPoseImageIO::processFrame(
 
         // Return null
         // TODO: test for nullptr later when publishing, etc
-        openpose_ros::OpenPoseHumanList human_list_msg;
+        openpose_ros_msgs::OpenPoseHumanList human_list_msg;
         return human_list_msg;
     }
 
@@ -291,8 +291,8 @@ openpose_ros::OpenPoseHumanList OpenPoseImageIO::processFrame(
 /*
  * Extracts keypoints for each body point given a human from OpenPose.
  */
-template <typename T> openpose_ros::OpenPoseHuman OpenPoseImageIO::extractBodyPartKeypoints(
-                              T poseKeypoints, openpose_ros::OpenPoseHuman human, int person_num)
+template <typename T> openpose_ros_msgs::OpenPoseHuman OpenPoseImageIO::extractBodyPartKeypoints(
+                              T poseKeypoints, openpose_ros_msgs::OpenPoseHuman human, int person_num)
 {
 
         int num_body_key_points_with_non_zero_prob = 0;
@@ -300,7 +300,7 @@ template <typename T> openpose_ros::OpenPoseHuman OpenPoseImageIO::extractBodyPa
         // For each detected body part, get keypoints and store
         for (auto bodyPart = 0 ; bodyPart < poseKeypoints.getSize(1) ; bodyPart++)
         {
-            openpose_ros::PointWithProb body_point_with_prob;
+            openpose_ros_msgs::PointWithProb body_point_with_prob;
             body_point_with_prob.x = poseKeypoints[{person_num, bodyPart, 0}];
             body_point_with_prob.y = poseKeypoints[{person_num, bodyPart, 1}];
             body_point_with_prob.prob = poseKeypoints[{person_num, bodyPart, 2}];
@@ -320,16 +320,16 @@ template <typename T> openpose_ros::OpenPoseHuman OpenPoseImageIO::extractBodyPa
 /*
  * Extracts keypoints for each face given a human from OpenPose.
  */
-template <typename T> openpose_ros::OpenPoseHuman OpenPoseImageIO::extractFaceKeypoints(
+template <typename T> openpose_ros_msgs::OpenPoseHuman OpenPoseImageIO::extractFaceKeypoints(
                               T faceKeypoints, std::vector<op::Rectangle<float>>& face_rectangles,
-                              openpose_ros::OpenPoseHuman human, int person_num)
+                              openpose_ros_msgs::OpenPoseHuman human, int person_num)
 {
 
     int num_face_key_points_with_non_zero_prob = 0;
 
     for (auto facePart = 0 ; facePart < faceKeypoints.getSize(1) ; facePart++)
     {
-        openpose_ros::PointWithProb face_point_with_prob;
+        openpose_ros_msgs::PointWithProb face_point_with_prob;
         face_point_with_prob.x = faceKeypoints[{person_num, facePart, 0}];
         face_point_with_prob.y = faceKeypoints[{person_num, facePart, 1}];
         face_point_with_prob.prob = faceKeypoints[{person_num, facePart, 2}];
@@ -344,7 +344,7 @@ template <typename T> openpose_ros::OpenPoseHuman OpenPoseImageIO::extractFaceKe
     human.num_face_key_points_with_non_zero_prob = num_face_key_points_with_non_zero_prob;
 
     // Get points for face bounding box
-    openpose_ros::BoundingBox face_bounding_box;
+    openpose_ros_msgs::BoundingBox face_bounding_box;
     face_bounding_box.x = face_rectangles.at(person_num).x;
     face_bounding_box.y = face_rectangles.at(person_num).y;
     face_bounding_box.width = face_rectangles.at(person_num).width;
@@ -359,10 +359,10 @@ template <typename T> openpose_ros::OpenPoseHuman OpenPoseImageIO::extractFaceKe
 /*
  * Extracts keypoints for each hand given a human from OpenPose.
  */
-template <typename T> openpose_ros::OpenPoseHuman OpenPoseImageIO::extractHandKeypoints(
+template <typename T> openpose_ros_msgs::OpenPoseHuman OpenPoseImageIO::extractHandKeypoints(
                               T leftHandKeypoints, T rightHandKeypoints,
                               std::vector<std::array<op::Rectangle<float>, 2>>& hand_rectangles,
-                              openpose_ros::OpenPoseHuman human, int person_num)
+                              openpose_ros_msgs::OpenPoseHuman human, int person_num)
 {
 
     int num_right_hand_key_points_with_non_zero_prob = 0;
@@ -372,7 +372,7 @@ template <typename T> openpose_ros::OpenPoseHuman OpenPoseImageIO::extractHandKe
     {
 
         // Process right hand
-        openpose_ros::PointWithProb right_hand_point_with_prob;
+        openpose_ros_msgs::PointWithProb right_hand_point_with_prob;
         right_hand_point_with_prob.x = rightHandKeypoints[{person_num, handPart, 0}];
         right_hand_point_with_prob.y = rightHandKeypoints[{person_num, handPart, 1}];
         right_hand_point_with_prob.prob = rightHandKeypoints[{person_num, handPart, 2}];
@@ -385,7 +385,7 @@ template <typename T> openpose_ros::OpenPoseHuman OpenPoseImageIO::extractHandKe
         human.right_hand_key_points_with_prob.at(handPart) = right_hand_point_with_prob;
 
         // Process left hand
-        openpose_ros::PointWithProb left_hand_point_with_prob;
+        openpose_ros_msgs::PointWithProb left_hand_point_with_prob;
         left_hand_point_with_prob.x = leftHandKeypoints[{person_num, handPart, 0}];
         left_hand_point_with_prob.y = leftHandKeypoints[{person_num, handPart, 1}];
         left_hand_point_with_prob.prob = leftHandKeypoints[{person_num, handPart, 2}];
@@ -402,7 +402,7 @@ template <typename T> openpose_ros::OpenPoseHuman OpenPoseImageIO::extractHandKe
     human.num_left_hand_key_points_with_non_zero_prob = num_left_hand_key_points_with_non_zero_prob;
 
     // Get points for left hand bounding box
-    openpose_ros::BoundingBox left_hand_bounding_box;
+    openpose_ros_msgs::BoundingBox left_hand_bounding_box;
     left_hand_bounding_box.x = hand_rectangles.at(person_num)[0].x;
     left_hand_bounding_box.y = hand_rectangles.at(person_num)[0].y;
     left_hand_bounding_box.width = hand_rectangles.at(person_num)[0].width;
@@ -410,7 +410,7 @@ template <typename T> openpose_ros::OpenPoseHuman OpenPoseImageIO::extractHandKe
     human.left_hand_bounding_box = left_hand_bounding_box;
 
     // Get points for right hand bounding box
-    openpose_ros::BoundingBox right_hand_bounding_box;
+    openpose_ros_msgs::BoundingBox right_hand_bounding_box;
     right_hand_bounding_box.x = hand_rectangles.at(person_num)[1].x;
     right_hand_bounding_box.y = hand_rectangles.at(person_num)[1].y;
     right_hand_bounding_box.width = hand_rectangles.at(person_num)[1].width;
@@ -425,8 +425,8 @@ template <typename T> openpose_ros::OpenPoseHuman OpenPoseImageIO::extractHandKe
 /*
  * TODO: extract heatmaps
  */
-openpose_ros::OpenPoseHumanList OpenPoseImageIO::getHeatMaps(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr,
-                                        openpose_ros::OpenPoseHumanList human_list)
+openpose_ros_msgs::OpenPoseHumanList OpenPoseImageIO::getHeatMaps(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr,
+                                        openpose_ros_msgs::OpenPoseHumanList human_list)
 {
 
     // Get Heatmaps from OpenPose
@@ -442,7 +442,7 @@ openpose_ros::OpenPoseHumanList OpenPoseImageIO::getHeatMaps(const std::shared_p
 /*
  * Publishes OpenPoseHumanList to ROS topic.
  */
-void OpenPoseImageIO::publishKeypoints(const openpose_ros::OpenPoseHumanList human_list)
+void OpenPoseImageIO::publishKeypoints(const openpose_ros_msgs::OpenPoseHumanList human_list)
 {
 
     openpose_human_list_pub_.publish(human_list);

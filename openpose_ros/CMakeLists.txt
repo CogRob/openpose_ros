@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   image_transport
   message_generation
+  openpose_ros_msgs
 )
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
@@ -23,30 +24,9 @@ find_package(Glog)
 find_package(OpenPose REQUIRED)
 
 
-# ROS Messages
-add_message_files(
-  FILES
-  BoundingBox.msg
-  OpenPoseHuman.msg
-  OpenPoseHumanList.msg
-  PointWithProb.msg
-  HandKeypoints.msg
-  FaceFeatures.msg
-  FaceFeatures3D.msg
-  BodyFeatures.msg
-  BodyFeatures3D.msg
-  BodyPart.msg
-  BodyPart3D.msg
-)
-
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-)
-
 catkin_package(
    INCLUDE_DIRS include
-   CATKIN_DEPENDS roscpp rospy std_msgs message_runtime
+   CATKIN_DEPENDS roscpp rospy std_msgs message_runtime openpose_ros_msgs
 )
 
 include_directories(
@@ -67,12 +47,12 @@ add_executable(${PROJECT_NAME}_image_node
   src/gflags_options.cpp
 )
 
-add_executable(${PROJECT_NAME}_3d_node
-  src/openpose_ros_3d_node.cpp
-  src/openpose.cpp
-  src/openpose_3d_io.cpp
-  src/gflags_options.cpp
-)
+#add_executable(${PROJECT_NAME}_3d_node
+#  src/openpose_ros_3d_node.cpp
+#  src/openpose.cpp
+#  src/openpose_3d_io.cpp
+#  src/gflags_options.cpp
+#)
 
 add_dependencies(
   ${PROJECT_NAME}_image_node
@@ -90,11 +70,11 @@ target_link_libraries(
   ${GLOG_LIBRARY}
 )
 
-target_link_libraries(
-  ${PROJECT_NAME}_3d_node
-  ${catkin_LIBRARIES}
-  ${OpenCV_LIBS}
-  ${OpenPose_LIBS}
-  ${GFLAGS_LIBRARY}
-  ${GLOG_LIBRARY}
-)
+#target_link_libraries(
+#  ${PROJECT_NAME}_3d_node
+#  ${catkin_LIBRARIES}
+#  ${OpenCV_LIBS}
+#  ${OpenPose_LIBS}
+#  ${GFLAGS_LIBRARY}
+#  ${GLOG_LIBRARY}
+#)

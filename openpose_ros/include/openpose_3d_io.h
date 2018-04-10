@@ -9,14 +9,14 @@
 
 #include <opencv2/core/core.hpp>
 
-#include <openpose_ros/BoundingBox.h>
-#include <openpose_ros/OpenPoseHuman.h>
-#include <openpose_ros/OpenPoseHumanList.h>
-#include <openpose_ros/PointWithProb.h>
-#include <openpose_ros/HandKeypoints.h>
-#include <openpose_ros/FaceFeatures3D.h>
-#include <openpose_ros/BodyFeatures3D.h>
-#include <openpose_ros/BodyPart3D.h>
+#include <openpose_ros_msgs/BoundingBox.h>
+#include <openpose_ros_msgs/OpenPoseHuman.h>
+#include <openpose_ros_msgs/OpenPoseHumanList.h>
+#include <openpose_ros_msgs/PointWithProb.h>
+#include <openpose_ros_msgs/HandKeypoints.h>
+#include <openpose_ros_msgs/FaceFeatures3D.h>
+#include <openpose_ros_msgs/BodyFeatures3D.h>
+#include <openpose_ros_msgs/BodyPart3D.h>
 
 #include <openpose.h>
 #include <gflags_options.h>

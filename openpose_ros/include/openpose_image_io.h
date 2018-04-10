@@ -9,14 +9,14 @@
 
 #include <opencv2/core/core.hpp>
 
-#include <openpose_ros/BoundingBox.h>
-#include <openpose_ros/OpenPoseHuman.h>
-#include <openpose_ros/OpenPoseHumanList.h>
-#include <openpose_ros/PointWithProb.h>
-#include <openpose_ros/HandKeypoints.h>
-#include <openpose_ros/FaceFeatures.h>
-#include <openpose_ros/BodyFeatures.h>
-#include <openpose_ros/BodyPart.h>
+#include <openpose_ros_msgs/BoundingBox.h>
+#include <openpose_ros_msgs/OpenPoseHuman.h>
+#include <openpose_ros_msgs/OpenPoseHumanList.h>
+#include <openpose_ros_msgs/PointWithProb.h>
+#include <openpose_ros_msgs/HandKeypoints.h>
+#include <openpose_ros_msgs/FaceFeatures.h>
+#include <openpose_ros_msgs/BodyFeatures.h>
+#include <openpose_ros_msgs/BodyPart.h>
 
 #include <openpose.h>
 #include <gflags_options.h>
@@ -50,33 +50,33 @@ namespace openpose_ros {
             std::shared_ptr<std::vector<op::Datum>> createDatum();
 
             bool display(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr,
-                         const openpose_ros::OpenPoseHumanList);
+                         const openpose_ros_msgs::OpenPoseHumanList);
 
             cv_bridge::CvImagePtr& getCvImagePtr();
 
-            openpose_ros::OpenPoseHumanList processFrame(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr);
+            openpose_ros_msgs::OpenPoseHumanList processFrame(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr);
 
-            template <typename T> openpose_ros::OpenPoseHuman extractBodyPartKeypoints(
+            template <typename T> openpose_ros_msgs::OpenPoseHuman extractBodyPartKeypoints(
                                                 T poseKeypoints,
-                                                openpose_ros::OpenPoseHuman human,
+                                                openpose_ros_msgs::OpenPoseHuman human,
                                                 int person_num);
 
-            template <typename T> openpose_ros::OpenPoseHuman extractFaceKeypoints(
+            template <typename T> openpose_ros_msgs::OpenPoseHuman extractFaceKeypoints(
                                                 T faceKeypoints,
                                                 std::vector<op::Rectangle<float>>& face_rectangles,
-                                                openpose_ros::OpenPoseHuman human,
+                                                openpose_ros_msgs::OpenPoseHuman human,
                                                 int person_num);
 
-            template <typename T> openpose_ros::OpenPoseHuman extractHandKeypoints(
+            template <typename T> openpose_ros_msgs::OpenPoseHuman extractHandKeypoints(
                                                 T leftHandKeypoints, T rightHandKeypoints,
                                                 std::vector<std::array<op::Rectangle<float>, 2>>& hand_rectangles,
-                                                openpose_ros::OpenPoseHuman human,
+                                                openpose_ros_msgs::OpenPoseHuman human,
                                                 int person_num);
 
-            openpose_ros::OpenPoseHumanList getHeatMaps(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr,
-                                                        openpose_ros::OpenPoseHumanList human_list);
+            openpose_ros_msgs::OpenPoseHumanList getHeatMaps(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr,
+                                                        openpose_ros_msgs::OpenPoseHumanList human_list);
 
-            void publishKeypoints(const openpose_ros::OpenPoseHumanList);
+            void publishKeypoints(const openpose_ros_msgs::OpenPoseHumanList);
 
             template <typename T> void printKeypoints(T poseKeypoints, T faceKeypoints,
                                               T leftHandKeypoints, T rightHandKeypoints);
