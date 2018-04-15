@@ -2,6 +2,7 @@ int32 num_body_key_points_with_non_zero_prob
 int32 num_face_key_points_with_non_zero_prob
 int32 num_right_hand_key_points_with_non_zero_prob
 int32 num_left_hand_key_points_with_non_zero_prob
+BoundingBox body_bounding_box
 BoundingBox face_bounding_box
 BoundingBox left_hand_bounding_box
 BoundingBox right_hand_bounding_box
