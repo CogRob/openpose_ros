@@ -1,0 +1,11 @@
+<launch>
+
+  <arg name="image_topic" default="/camera/image_raw" />
+
+  <!-- Launch openpose_ros image node -->
+  <node pkg="openpose_ros" type="openpose_ros_image_node" name="openpose_ros_image_node" output="screen">
+    <param name="image_topic" value="$(arg image_topic)" />
+    <param name="output_topic" value="/openpose_ros/human_list" />
+  </node>
+
+</launch>
